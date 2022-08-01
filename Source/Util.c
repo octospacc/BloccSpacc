@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include "SDL/SDL.h"
 #include "SDL/SDL_image.h"
 
@@ -36,4 +37,13 @@ SDL_Surface * ScreenSet ( int Width, int Height, int Bits, SDL_Surface * Screen 
 		//SDL_FULLSCREEN //|
 	);
 	return Screen;
+}
+
+bool FlipScreen( SDL_Surface * Screen ) {
+	if ( SDL_Flip( Screen ) != 0 ) {
+		printf("[E] Error updating screen.\n");
+		return false;
+	}
+	SDL_FillRect( Screen, &Screen->clip_rect, SDL_MapRGB( Screen->format, 0xFF, 0xFF, 0xFF ) );
+	return true;
 }

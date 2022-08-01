@@ -6,6 +6,8 @@
 #include "SDL/SDL_ttf.h"
 #include "Util.h"
 
+#define AppName "TestApp"
+
 #define ScreenBits 16
 int ScreenWidth = 256;
 int ScreenHeight = 256;
@@ -36,9 +38,8 @@ struct UsedKeys {
 } UsedKeys;
 
 // TODO: Proper map memory management lol
-int BlocksNum = 4096; // ChunkSize * ChunksNum.z * ChunksNum.y * ChunksNum.x;
-int Map[4096];
-int SelectedBlock;
+int BlocksNum = ChunkSize*ChunkSize*ChunkSize; // ChunkSize * ChunksNum.z * ChunksNum.y * ChunksNum.x;
+int Map[ChunkSize][ChunkSize][ChunkSize] = {};
 
 struct xyz GetBlocksOnScreenNum() {
 	struct xyz Num;
@@ -61,7 +62,7 @@ bool Init() {
 		printf("[E] Error initializing SDL_TTF.\n");
 		return false;
 	}
-	SDL_WM_SetCaption ( "Test", NULL );
+	SDL_WM_SetCaption ( AppName, "Assets/Icon.png" );
 	return true;
 }
 
@@ -137,10 +138,10 @@ void EventHandle() {
 		MoveCursor( 9 );
 	}
 	if ( UsedKeys.Place ) {
-		Map[SelectedBlock] = 0;
+		Map[CursorPos.y/BlockSize][CursorPos.z/BlockSize][CursorPos.x/BlockSize] = 0;
 	}
 	if ( UsedKeys.Break ) {
-		Map[SelectedBlock] = 3;
+		Map[CursorPos.y/BlockSize][CursorPos.z/BlockSize][CursorPos.x/BlockSize] = 3;
 	}
 	UsedKeys.Up = false;
 	UsedKeys.Down = false;
@@ -152,26 +153,22 @@ void EventHandle() {
 	UsedKeys.Break = false;
 }
 
-void DrawMap( int * Map, struct xyz ChunksNum ) {
+void DrawMap( struct xyz ChunksNum ) {
 	struct xyz BlocksOnScreen = GetBlocksOnScreenNum();
-	int i = 0;
 	//for ( int Row = CursorPos.y/BlockSize - BlocksOnScreen.y*4; Row < CursorPos.y/BlockSize + BlocksOnScreen.y*4; Row++ ) {
 		//for ( int Col = 0; Col < BlocksOnScreen.x*2; Col++ ) {
-	for ( int c = 0; c < ChunkSize; c++ ) {
-		for ( int y = 0; y < ChunksNum.y; y++ ) {
-			for ( int z = 0; z < ChunksNum.z; z++ ) {
-				for ( int x = 0; x < ChunksNum.x; x++ ) {
-					struct xyz MapCoords = OrthoToIso ( x, z, BlockSize );
-					int h = 0;
-					DrawSurf(
-						MapCoords.x - Camera.x - BlockSize/2,
-						MapCoords.z + h - Camera.z - y*BlockSize/2 - Camera.y,
-						Blockset,
-						& Blocks[Map[i]],
-						Screen
-					);
-					i++;
-				}
+	for ( int y = 0; y < ChunksNum.y; y++ ) {
+		for ( int z = 0; z < ChunksNum.z; z++ ) {
+			for ( int x = 0; x < ChunksNum.x; x++ ) {
+				struct xyz MapCoords = OrthoToIso ( x, z, BlockSize );
+				int h = 0;
+				DrawSurf(
+					MapCoords.x - Camera.x - BlockSize/2,
+					MapCoords.z + h - Camera.z - y*BlockSize/2 - Camera.y,
+					Blockset,
+					& Blocks[Map[y][z][x]],
+					Screen
+				);
 			}
 		}
 	}
@@ -199,31 +196,31 @@ void DrawDebug() { // There's a memory leak somewhere here
 	DrawSurf( 8, 32, DebugMsg, NULL, Screen );
 }
 
-int FlipScreen() {
-	if ( SDL_Flip ( Screen ) == -1 ) {
-		printf("[E] Error updating screen.\n");
-		return 1;
-	}
-	SDL_FillRect ( Screen, &Screen -> clip_rect, SDL_MapRGB ( Screen -> format, 0xFF, 0xFF, 0xFF ) );
-	return 0;
-}
-
-void SetSuperflatMap() {
-	for ( int i=0; i < BlocksNum; i++ ) {
-		Map[i] = 2;
-	}
-}
-void SetRandomNoiseMap() {
-	for ( int i=0; i < BlocksNum; i++ ) {
-		int r = rand() % BlocksetNum;
-		if ( r == 1 ) {
-			r = 2;
+void SetSuperflatMap( struct xyz ChunksNum ) {
+	for ( int y = 0; y < ChunksNum.y; y++ ) {
+		for ( int z = 0; z < ChunksNum.z; z++ ) {
+			for ( int x = 0; x < ChunksNum.x; x++ ) {
+				Map[y][z][x] = 2;
+			}
 		}
-		Map[i] = r;
+	}
+}
+void SetRandomNoiseMap( struct xyz ChunksNum ) {
+	for ( int y = 0; y < ChunksNum.y; y++ ) {
+		for ( int z = 0; z < ChunksNum.z; z++ ) {
+			for ( int x = 0; x < ChunksNum.x; x++ ) {
+				int r = rand() % BlocksetNum;
+				if ( r == 1 ) {
+					r = 2;
+				}
+				Map[y][z][x] = r;
+			}
+		}
 	}
 }
 
-int main ( int argc, char* args[] ) {
+int main( int argc, char* args[] ) {
+	printf("[I] Starting!\n");
 	srand( time( NULL ) );
 
 	if ( !Init() ) {
@@ -253,10 +250,10 @@ int main ( int argc, char* args[] ) {
 	ChunksNum.y = ChunkSize;
 	ChunksNum.z = ChunkSize;
 
-	SetRandomNoiseMap();
+	SetRandomNoiseMap( ChunksNum );
 
 	while ( !Quit ) {
-		while ( SDL_PollEvent ( & Event ) ) {
+		while ( SDL_PollEvent( & Event ) ) {
 			if ( Event.type == SDL_QUIT ) {
 				Quit = true;
 			}
@@ -270,10 +267,10 @@ int main ( int argc, char* args[] ) {
 					DebugMode = !DebugMode;
 				}
 				if ( Event.key.keysym.sym == SDLK_F6 ) {
-					SetSuperflatMap();
+					SetSuperflatMap( ChunksNum );
 				}
 				if ( Event.key.keysym.sym == SDLK_F7 ) {
-					SetRandomNoiseMap();
+					SetRandomNoiseMap( ChunksNum );
 				}
 				
 				if ( Event.key.keysym.sym == SDLK_UP ) {
@@ -305,14 +302,13 @@ int main ( int argc, char* args[] ) {
 		}
 		EventHandle();
 		SetCamera();
-		DrawMap( Map, ChunksNum );
+		DrawMap( ChunksNum );
 		DrawCursor();
-		SelectedBlock = CursorPos.x + 4032 + CursorPos.z;
 		if ( DebugMode ) {
 			DrawDebug();
 		}
 
-		if ( FlipScreen() != 0 ) {
+		if ( !FlipScreen( Screen ) ) {
 			return 1;
 		}
 		SDL_Delay( 16 ); // TODO: proper framerate management
