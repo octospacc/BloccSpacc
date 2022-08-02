@@ -102,12 +102,13 @@ void MoveCursor (int Direction) {
 	if ( Direction == 6 && CursorPos.x > 0 ) { // Left
 		CursorPos.x -= BlockSize;
 	}
-	if ( Direction == 8 && CursorPos.y > 0 ) { // Above
-		CursorPos.y -= BlockSize;
-	}
-	if ( Direction == 9 && CursorPos.y < BlockSize * (ChunksNum.y - 1) ) { // Below
+	if ( Direction == 8 && CursorPos.y < BlockSize * (ChunksNum.y - 1) ) { // Above
 		CursorPos.y += BlockSize;
 	}
+	if ( Direction == 9 && CursorPos.y > 0 ) { // Below
+		CursorPos.y -= BlockSize;
+	}
+
 }
 
 void EventHandle() {
@@ -156,7 +157,7 @@ void DrawMap( struct xyz ChunksNum ) {
 				DrawSurf(
 					MapCoords.x - Camera.x - BlockSize/2,
 					MapCoords.z - Camera.z - y*BlockSize/2, //- Camera.y,
-					Blockset, & Blocks[Map[ChunksNum.y-1-y][z][x]], Screen
+					Blockset, & Blocks[Map[y][z][x]], Screen
 				);
 			}
 		}

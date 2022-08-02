@@ -4,7 +4,7 @@ BloccSpacc is a portable isometric voxel sandbox game, mainly focused on buildin
 
 ### Development status / roadmap:
 
-- [x] Breaking/placing blocks (broken because view is broken)
+- [x] Breaking/placing blocks
 - [ ] View mode / Edit mode
 - [ ] Moving cursor in all 3 axis
 - [ ] Rotating view
