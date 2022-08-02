@@ -155,7 +155,7 @@ void DrawMap( struct xyz ChunksNum ) {
 				struct xyz MapCoords = OrthoToIso ( x, y, z, BlockSize );
 				DrawSurf(
 					MapCoords.x - Camera.x - BlockSize/2,
-					MapCoords.z - Camera.z - y*BlockSize/2 - Camera.y,
+					MapCoords.z - Camera.z - y*BlockSize/2, //- Camera.y,
 					Blockset, & Blocks[Map[ChunksNum.y-1-y][z][x]], Screen
 				);
 			}
@@ -169,7 +169,7 @@ void SetCamera() {
 	int z = ( CursorPos.z + BlockSize/2 );
 	struct xyz xyz = OrthoToIso ( x, y, z, 1 );
     Camera.x = xyz.x - ScreenWidth/2;
-    Camera.y = y - ScreenHeight/2;//xyz.y - ScreenHeight/2;
+    //Camera.y = y - ScreenHeight/2 + BlockSize;//xyz.y - ScreenHeight/2;
     Camera.z = xyz.z - ScreenHeight/2;
 }
 
@@ -177,7 +177,7 @@ void DrawCursor() {
 	struct xyz CursorCoords = OrthoToIso ( CursorPos.x, CursorPos.y, CursorPos.z, 1 );
 	DrawSurf(
 		CursorCoords.x - Camera.x - BlockSize/2,
-		CursorCoords.z - Camera.z - BlockSize/2, //- CursorCoords.y - Camera.y - BlockSize/2,
+		CursorCoords.z - Camera.z - BlockSize/2 - CursorPos.y/2, //- CursorCoords.y - Camera.y - BlockSize/2,
 		Cursorset, & Cursors [1], Screen );
 }
 
@@ -252,6 +252,7 @@ int main( int argc, char* args[] ) {
 	ChunksNum.z = ChunkSize;
 
 	SetRandomNoiseMap();
+	CursorPos.y = BlockSize * (ChunksNum.y - 1);
 
 	while ( !Quit ) {
 		while ( SDL_PollEvent( & Event ) ) {
@@ -319,3 +320,4 @@ int main( int argc, char* args[] ) {
 	SDL_Quit();
 	return 0;
 }
+
