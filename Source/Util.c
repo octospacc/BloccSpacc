@@ -32,8 +32,8 @@ SDL_Surface * ScreenSet ( int Width, int Height, int Bits, SDL_Surface * Screen 
 	Screen = SDL_SetVideoMode ( Width, Height, Bits, 
 		//SDL_SWSURFACE //|
 		SDL_HWSURFACE |
-		SDL_DOUBLEBUF //|
-		//SDL_RESIZABLE //|
+		SDL_DOUBLEBUF |
+		SDL_RESIZABLE //|
 		//SDL_FULLSCREEN //|
 	);
 	return Screen;

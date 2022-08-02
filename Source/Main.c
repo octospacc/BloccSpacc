@@ -6,11 +6,11 @@
 #include "SDL/SDL_ttf.h"
 #include "Util.h"
 
-#define AppName "TestApp"
+#define AppName "BloccSpacc"
 
 #define ScreenBits 16
-int ScreenWidth = 256;
-int ScreenHeight = 256;
+int ScreenWidth = 320;
+int ScreenHeight = 320;
 
 SDL_Surface * Screen = NULL;
 SDL_Event Event;
@@ -36,6 +36,8 @@ struct UsedKeys {
 	bool Up, Down, Left, Right, Above, Below;
 	bool Place, Break;
 } UsedKeys;
+
+struct xyz CursorPos, Camera, ChunksNum;
 
 // TODO: Proper map memory management lol
 int BlocksNum = ChunkSize*ChunkSize*ChunkSize; // ChunkSize * ChunksNum.z * ChunksNum.y * ChunksNum.x;
@@ -87,35 +89,25 @@ bool LoadAssets() {
 	return true;
 }
 
-void MoveCursor (int Direction) { // Up, Right, Down, Left
-	if ( Direction == 0 ) {
+void MoveCursor (int Direction) {
+	if ( Direction == 0 && CursorPos.z > 0 ) { // Up
 		CursorPos.z -= BlockSize;
 	}
-	if ( Direction == 2 ) {
+	if ( Direction == 2 && CursorPos.x < BlockSize * (ChunksNum.x - 1) ) { // Right
 		CursorPos.x += BlockSize;
 	}
-	if ( Direction == 4 ) {
+	if ( Direction == 4 && CursorPos.z < BlockSize * (ChunksNum.z - 1) ) { // Down
 		CursorPos.z += BlockSize;
 	}
-	if ( Direction == 6 ) {
+	if ( Direction == 6 && CursorPos.x > 0 ) { // Left
 		CursorPos.x -= BlockSize;
 	}
-	if ( Direction == 8 ) {
+	if ( Direction == 8 && CursorPos.y > 0 ) { // Above
 		CursorPos.y -= BlockSize;
 	}
-	if ( Direction == 9 ) {
+	if ( Direction == 9 && CursorPos.y < BlockSize * (ChunksNum.y - 1) ) { // Below
 		CursorPos.y += BlockSize;
 	}
-}
-
-void SetCamera() {
-	int x = ( CursorPos.x + BlockSize/2 );
-	int y = ( CursorPos.y + BlockSize/2 );
-	int z = ( CursorPos.z + BlockSize/2 );
-	struct xyz xyz = OrthoToIso ( x, z, 1 );
-    Camera.x = xyz.x - ScreenWidth/2;
-    Camera.y = y - ScreenHeight/2;
-    Camera.z = xyz.z - ScreenHeight/2;
 }
 
 void EventHandle() {
@@ -154,29 +146,39 @@ void EventHandle() {
 }
 
 void DrawMap( struct xyz ChunksNum ) {
-	struct xyz BlocksOnScreen = GetBlocksOnScreenNum();
+	//struct xyz BlocksOnScreen = GetBlocksOnScreenNum();
 	//for ( int Row = CursorPos.y/BlockSize - BlocksOnScreen.y*4; Row < CursorPos.y/BlockSize + BlocksOnScreen.y*4; Row++ ) {
 		//for ( int Col = 0; Col < BlocksOnScreen.x*2; Col++ ) {
 	for ( int y = 0; y < ChunksNum.y; y++ ) {
 		for ( int z = 0; z < ChunksNum.z; z++ ) {
 			for ( int x = 0; x < ChunksNum.x; x++ ) {
-				struct xyz MapCoords = OrthoToIso ( x, z, BlockSize );
-				int h = 0;
+				struct xyz MapCoords = OrthoToIso ( x, y, z, BlockSize );
 				DrawSurf(
 					MapCoords.x - Camera.x - BlockSize/2,
-					MapCoords.z + h - Camera.z - y*BlockSize/2 - Camera.y,
-					Blockset,
-					& Blocks[Map[y][z][x]],
-					Screen
+					MapCoords.z - Camera.z - y*BlockSize/2 - Camera.y,
+					Blockset, & Blocks[Map[ChunksNum.y-1-y][z][x]], Screen
 				);
 			}
 		}
 	}
 }
 
+void SetCamera() {
+	int x = ( CursorPos.x + BlockSize/2 );
+	int y = ( CursorPos.y + BlockSize/2 );
+	int z = ( CursorPos.z + BlockSize/2 );
+	struct xyz xyz = OrthoToIso ( x, y, z, 1 );
+    Camera.x = xyz.x - ScreenWidth/2;
+    Camera.y = y - ScreenHeight/2;//xyz.y - ScreenHeight/2;
+    Camera.z = xyz.z - ScreenHeight/2;
+}
+
 void DrawCursor() {
-	struct xyz CursorCoords = OrthoToIso ( CursorPos.x, CursorPos.z, 1 );
-	DrawSurf ( CursorCoords.x - BlockSize/2 - Camera.x, CursorCoords.z - BlockSize/2 - Camera.z, Cursorset, & Cursors [1], Screen );
+	struct xyz CursorCoords = OrthoToIso ( CursorPos.x, CursorPos.y, CursorPos.z, 1 );
+	DrawSurf(
+		CursorCoords.x - Camera.x - BlockSize/2,
+		CursorCoords.z - Camera.z - BlockSize/2, //- CursorCoords.y - Camera.y - BlockSize/2,
+		Cursorset, & Cursors [1], Screen );
 }
 
 void DrawDebug() { // There's a memory leak somewhere here
@@ -190,13 +192,13 @@ void DrawDebug() { // There's a memory leak somewhere here
 	DebugMsg = TTF_RenderText_Blended( DebugFont, Str, DebugTextColor );
 	DrawSurf( 8, 20, DebugMsg, NULL, Screen );
 
-	struct xyz CursorCoords = OrthoToIso ( CursorPos.x, CursorPos.z, 1 );
+	struct xyz CursorCoords = OrthoToIso ( CursorPos.x, CursorPos.y, CursorPos.z, 1 );
 	snprintf( Str, sizeof(Str), "CursorCoords:  x:%d  y:%d  z:%d", CursorCoords.x, CursorCoords.y, CursorCoords.z );
 	DebugMsg = TTF_RenderText_Blended( DebugFont, Str, DebugTextColor );
 	DrawSurf( 8, 32, DebugMsg, NULL, Screen );
 }
 
-void SetSuperflatMap( struct xyz ChunksNum ) {
+void SetSuperflatMap() {
 	for ( int y = 0; y < ChunksNum.y; y++ ) {
 		for ( int z = 0; z < ChunksNum.z; z++ ) {
 			for ( int x = 0; x < ChunksNum.x; x++ ) {
@@ -205,7 +207,7 @@ void SetSuperflatMap( struct xyz ChunksNum ) {
 		}
 	}
 }
-void SetRandomNoiseMap( struct xyz ChunksNum ) {
+void SetRandomNoiseMap() {
 	for ( int y = 0; y < ChunksNum.y; y++ ) {
 		for ( int z = 0; z < ChunksNum.z; z++ ) {
 			for ( int x = 0; x < ChunksNum.x; x++ ) {
@@ -245,12 +247,11 @@ int main( int argc, char* args[] ) {
 		Blocks [i].h = BlockSize;
 	}
 
-	struct xyz ChunksNum;
 	ChunksNum.x = ChunkSize;
 	ChunksNum.y = ChunkSize;
 	ChunksNum.z = ChunkSize;
 
-	SetRandomNoiseMap( ChunksNum );
+	SetRandomNoiseMap();
 
 	while ( !Quit ) {
 		while ( SDL_PollEvent( & Event ) ) {
@@ -267,10 +268,10 @@ int main( int argc, char* args[] ) {
 					DebugMode = !DebugMode;
 				}
 				if ( Event.key.keysym.sym == SDLK_F6 ) {
-					SetSuperflatMap( ChunksNum );
+					SetSuperflatMap();
 				}
 				if ( Event.key.keysym.sym == SDLK_F7 ) {
-					SetRandomNoiseMap( ChunksNum );
+					SetRandomNoiseMap();
 				}
 				
 				if ( Event.key.keysym.sym == SDLK_UP ) {
