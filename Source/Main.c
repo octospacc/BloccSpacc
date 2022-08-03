@@ -4,15 +4,13 @@
 #include "SDL/SDL.h"
 #include "SDL/SDL_image.h"
 #include "SDL/SDL_ttf.h"
+#include "TargetsConfigs.h"
 #include "Blocks.h"
 #include "Keys.h"
 #include "Util.h"
 
 #define AppName "BloccSpacc"
 
-#define ScreenBits 16
-int ScreenWidth = 512;
-int ScreenHeight = 512;
 #define GameTick 30
 
 SDL_Surface * Screen = NULL;
@@ -28,7 +26,7 @@ SDL_Surface * DebugMsg = NULL;
 TTF_Font * DebugFont = NULL;
 SDL_Color DebugTextColor = { 80, 80, 80 };
 
-bool Quit, Redraw, DebugMode;
+bool Quit, Recalc, DebugMode;
 
 // <https://www.libsdl.org/release/SDL-1.2.15/docs/html/guidetimeexamples.html>
 static Uint32 NextTime;
@@ -103,19 +101,19 @@ void MoveCursor (int Direction) {
 	if ( Direction == 0 && CursorPos.z > 0 ) { // Up
 		CursorPos.z -= BlockSize;
 	}
-	if ( Direction == 2 && CursorPos.x < BlockSize * (ChunksNum.x - 1) ) { // Right
+	else if ( Direction == 2 && CursorPos.x < BlockSize * (ChunksNum.x - 1) ) { // Right
 		CursorPos.x += BlockSize;
 	}
-	if ( Direction == 4 && CursorPos.z < BlockSize * (ChunksNum.z - 1) ) { // Down
+	else if ( Direction == 4 && CursorPos.z < BlockSize * (ChunksNum.z - 1) ) { // Down
 		CursorPos.z += BlockSize;
 	}
-	if ( Direction == 6 && CursorPos.x > 0 ) { // Left
+	else if ( Direction == 6 && CursorPos.x > 0 ) { // Left
 		CursorPos.x -= BlockSize;
 	}
-	if ( Direction == 8 && CursorPos.y < BlockSize * (ChunksNum.y - 1) ) { // Above
+	else if ( Direction == 8 && CursorPos.y < BlockSize * (ChunksNum.y - 1) ) { // Above
 		CursorPos.y += BlockSize;
 	}
-	if ( Direction == 9 && CursorPos.y > 0 ) { // Below
+	else if ( Direction == 9 && CursorPos.y > 0 ) { // Below
 		CursorPos.y -= BlockSize;
 	}
 
@@ -177,7 +175,7 @@ void SetCamera() {
 	int z = ( CursorPos.z + BlockSize/2 );
 	struct xyz xyz = OrthoToIso ( x, y, z, 1 );
     Camera.x = xyz.x - ScreenWidth/2;
-    Camera.z = xyz.z - ScreenHeight/2;
+    Camera.z = xyz.z - ScreenHeight*0.80;
 }
 
 void DrawCursor() {
@@ -269,12 +267,12 @@ int main( int argc, char* args[] ) {
 	CursorPos.y = 0;
 	CursorPos.z = BlockSize * (ChunksNum.z - 1);
 
-	Redraw = true;
+	Recalc = true;
 
 	while ( !Quit ) {
 		NextTime = SDL_GetTicks() + GameTick;
 		while ( SDL_PollEvent( & Event ) ) {
-			Redraw = true;
+			Recalc = true;
 			if ( Event.type == SDL_QUIT ) {
 				Quit = true;
 			}
@@ -321,8 +319,8 @@ int main( int argc, char* args[] ) {
 				}
 			}
 		}
-		EventHandle();
-		if ( Redraw ) {
+		if ( Recalc ) {
+			EventHandle();
 			SDL_FillRect( Screen, &Screen->clip_rect, SDL_MapRGB( Screen->format, 0xFF, 0xFF, 0xFF ) );
 			SetCamera();
 			DrawMap( ChunksNum );
@@ -333,7 +331,7 @@ int main( int argc, char* args[] ) {
 			if ( !FlipScreen( Screen ) ) {
 				return 1;
 			}
-			Redraw = false;
+			Recalc = false;
 		}
 		SDL_Delay( TimeLeft() );
         NextTime += GameTick;
