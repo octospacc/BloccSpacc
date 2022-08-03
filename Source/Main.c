@@ -4,6 +4,7 @@
 #include "SDL/SDL.h"
 #include "SDL/SDL_image.h"
 #include "SDL/SDL_ttf.h"
+#include "Blocks.h"
 #include "Util.h"
 
 #define AppName "BloccSpacc"
@@ -19,15 +20,12 @@ SDL_Surface * Cursorset = NULL;
 #define CursorsNum 2
 SDL_Rect Cursors[CursorsNum];
 
-SDL_Surface * Blockset = NULL;
-#define BlocksetNum 4
-SDL_Rect Blocks[BlocksetNum];
+SDL_Surface * BlocksImg = NULL;
 
 SDL_Surface * DebugMsg = NULL;
 TTF_Font * DebugFont = NULL;
 SDL_Color DebugTextColor = { 80, 80, 80 };
 
-#define BlockSize 32
 #define ChunkSize 8
 
 bool Quit, DebugMode;
@@ -74,8 +72,8 @@ bool LoadAssets() {
 	if ( Cursorset == NULL ) {
 		Error = true;
 	}
-	Blockset = LoadImage ( "Assets/Blockset.png" );
-	if ( Blockset == NULL ) {
+	BlocksImg = LoadImage ( "Assets/Blocks.png" );
+	if ( BlocksImg == NULL ) {
 		Error = true;
 	}
 	DebugFont = TTF_OpenFont ( "Assets/LiberationMono-Regular.ttf", 12 );
@@ -147,9 +145,6 @@ void EventHandle() {
 }
 
 void DrawMap( struct xyz ChunksNum ) {
-	//struct xyz BlocksOnScreen = GetBlocksOnScreenNum();
-	//for ( int Row = CursorPos.y/BlockSize - BlocksOnScreen.y*4; Row < CursorPos.y/BlockSize + BlocksOnScreen.y*4; Row++ ) {
-		//for ( int Col = 0; Col < BlocksOnScreen.x*2; Col++ ) {
 	for ( int y = 0; y < ChunksNum.y; y++ ) {
 		for ( int z = 0; z < ChunksNum.z; z++ ) {
 			for ( int x = 0; x < ChunksNum.x; x++ ) {
@@ -157,7 +152,7 @@ void DrawMap( struct xyz ChunksNum ) {
 				DrawSurf(
 					MapCoords.x - Camera.x - BlockSize/2,
 					MapCoords.z - Camera.z - y*BlockSize/2, //- Camera.y,
-					Blockset, & Blocks[Map[y][z][x]], Screen
+					BlocksImg, & Blocks[Map[y][z][x]].Img, Screen
 				);
 			}
 		}
@@ -170,7 +165,6 @@ void SetCamera() {
 	int z = ( CursorPos.z + BlockSize/2 );
 	struct xyz xyz = OrthoToIso ( x, y, z, 1 );
     Camera.x = xyz.x - ScreenWidth/2;
-    //Camera.y = y - ScreenHeight/2 + BlockSize;//xyz.y - ScreenHeight/2;
     Camera.z = xyz.z - ScreenHeight/2;
 }
 
@@ -178,8 +172,9 @@ void DrawCursor() {
 	struct xyz CursorCoords = OrthoToIso ( CursorPos.x, CursorPos.y, CursorPos.z, 1 );
 	DrawSurf(
 		CursorCoords.x - Camera.x - BlockSize/2,
-		CursorCoords.z - Camera.z - BlockSize/2 - CursorPos.y/2, //- CursorCoords.y - Camera.y - BlockSize/2,
-		Cursorset, & Cursors [1], Screen );
+		CursorCoords.z - Camera.z - BlockSize/2 - CursorPos.y/2,
+		Cursorset, & Cursors [1], Screen
+	);
 }
 
 void DrawDebug() { // There's a memory leak somewhere here
@@ -200,10 +195,15 @@ void DrawDebug() { // There's a memory leak somewhere here
 }
 
 void SetSuperflatMap() {
-	for ( int y = 0; y < ChunksNum.y; y++ ) {
+	for ( int z = 0; z < ChunksNum.z; z++ ) {
+		for ( int x = 0; x < ChunksNum.x; x++ ) {
+			Map[0][z][x] = 4;
+		}
+	}
+	for ( int y = 1; y < ChunksNum.y; y++ ) {
 		for ( int z = 0; z < ChunksNum.z; z++ ) {
 			for ( int x = 0; x < ChunksNum.x; x++ ) {
-				Map[y][z][x] = 2;
+				Map[y][z][x] = 0;
 			}
 		}
 	}
@@ -242,10 +242,10 @@ int main( int argc, char* args[] ) {
 		Cursors [i].h = BlockSize;
 	}
 	for ( int i = 0; i < BlocksetNum; i++ ) {
-		Blocks [i].x = BlockSize * i;
-		Blocks [i].y = 0;
-		Blocks [i].w = BlockSize;
-		Blocks [i].h = BlockSize;
+		Blocks[i].Img.x = BlockSize * i;
+		Blocks[i].Img.y = 0;
+		Blocks[i].Img.w = BlockSize;
+		Blocks[i].Img.h = BlockSize;
 	}
 
 	ChunksNum.x = ChunkSize;
