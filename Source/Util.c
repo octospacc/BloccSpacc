@@ -44,6 +44,5 @@ bool FlipScreen( SDL_Surface * Screen ) {
 		printf("[E] Error updating screen.\n");
 		return false;
 	}
-	SDL_FillRect( Screen, &Screen->clip_rect, SDL_MapRGB( Screen->format, 0xFF, 0xFF, 0xFF ) );
 	return true;
 }

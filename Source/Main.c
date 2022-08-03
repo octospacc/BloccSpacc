@@ -5,13 +5,14 @@
 #include "SDL/SDL_image.h"
 #include "SDL/SDL_ttf.h"
 #include "Blocks.h"
+#include "Keys.h"
 #include "Util.h"
 
 #define AppName "BloccSpacc"
 
 #define ScreenBits 16
-int ScreenWidth = 320;
-int ScreenHeight = 320;
+int ScreenWidth = 512;
+int ScreenHeight = 512;
 
 SDL_Surface * Screen = NULL;
 SDL_Event Event;
@@ -26,7 +27,7 @@ SDL_Surface * DebugMsg = NULL;
 TTF_Font * DebugFont = NULL;
 SDL_Color DebugTextColor = { 80, 80, 80 };
 
-bool Quit, DebugMode;
+bool Quit, Redraw, DebugMode;
 
 struct UsedKeys {
 	bool Up, Down, Left, Right, Above, Below;
@@ -36,7 +37,7 @@ struct UsedKeys {
 struct xyz CursorPos, Camera, ChunksNum;
 
 // TODO: Proper map memory management lol
-int BlocksNum = ChunkSize*ChunkSize*ChunkSize; // ChunkSize * ChunksNum.z * ChunksNum.y * ChunksNum.x;
+int BlocksNum = ChunkSize*ChunkSize*ChunkSize;
 int Map[ChunkSize][ChunkSize][ChunkSize] = {};
 
 struct xyz GetBlocksOnScreenNum() {
@@ -142,14 +143,14 @@ void EventHandle() {
 	UsedKeys.Break = false;
 }
 
-void DrawMap( struct xyz ChunksNum ) {
+void DrawMap( struct xyz ChunksNum ) { // TODO: Reoptimize this to draw only visible blocks
 	for ( int y = 0; y < ChunksNum.y; y++ ) {
 		for ( int z = 0; z < ChunksNum.z; z++ ) {
 			for ( int x = 0; x < ChunksNum.x; x++ ) {
 				struct xyz MapCoords = OrthoToIso ( x, y, z, BlockSize );
 				DrawSurf(
 					MapCoords.x - Camera.x - BlockSize/2,
-					MapCoords.z - Camera.z - y*BlockSize/2, //- Camera.y,
+					MapCoords.z - Camera.z - y*BlockSize/2,
 					BlocksImg, & Blocks[Map[y][z][x]].Img, Screen
 				);
 			}
@@ -211,7 +212,7 @@ void SetRandomNoiseMap() {
 		for ( int z = 0; z < ChunksNum.z; z++ ) {
 			for ( int x = 0; x < ChunksNum.x; x++ ) {
 				int r = rand() % BlocksetNum;
-				if ( r == 1 ) {
+				if ( r == 1 ) { // Avoid block 1 (all white, hard to see) for testing
 					r = 2;
 				}
 				Map[y][z][x] = r;
@@ -251,66 +252,74 @@ int main( int argc, char* args[] ) {
 	ChunksNum.z = ChunkSize;
 
 	SetRandomNoiseMap();
-	CursorPos.y = BlockSize * (ChunksNum.y - 1);
+	CursorPos.x = BlockSize * (ChunksNum.x - 1);
+	CursorPos.y = 0;
+	CursorPos.z = BlockSize * (ChunksNum.z - 1);
+
+	Redraw = true;
 
 	while ( !Quit ) {
 		while ( SDL_PollEvent( & Event ) ) {
+			Redraw = true;
 			if ( Event.type == SDL_QUIT ) {
 				Quit = true;
 			}
 			else if ( Event.type == SDL_KEYDOWN ) {
-				if ( Event.key.keysym.sym == SDLK_ESCAPE ) {
+				if ( Event.key.keysym.sym == KeyEsc ) {
 					Quit = true;
 				}
 			}
 			else if ( Event.type == SDL_KEYUP ) {
-				if ( Event.key.keysym.sym == SDLK_F3 ) {
+				if ( Event.key.keysym.sym == KeyDebug ) {
 					DebugMode = !DebugMode;
 				}
-				if ( Event.key.keysym.sym == SDLK_F6 ) {
+				if ( Event.key.keysym.sym == KeyGenFlatMap ) {
 					SetSuperflatMap();
 				}
-				if ( Event.key.keysym.sym == SDLK_F7 ) {
+				if ( Event.key.keysym.sym == KeyGenNoiseMap ) {
 					SetRandomNoiseMap();
 				}
 				
-				if ( Event.key.keysym.sym == SDLK_UP ) {
+				if ( Event.key.keysym.sym == KeyUp ) {
 					UsedKeys.Up = true;
 				}
-				if ( Event.key.keysym.sym == SDLK_RIGHT ) {
+				if ( Event.key.keysym.sym == KeyRight ) {
 					UsedKeys.Right = true;
 				}
-				if ( Event.key.keysym.sym == SDLK_DOWN ) {
+				if ( Event.key.keysym.sym == KeyDown ) {
 					UsedKeys.Down = true;
 				}
-				if ( Event.key.keysym.sym == SDLK_LEFT ) {
+				if ( Event.key.keysym.sym == KeyLeft ) {
 					UsedKeys.Left = true;
 				}
-				if ( Event.key.keysym.sym == SDLK_LSHIFT ) {
+				if ( Event.key.keysym.sym == KeyAbove ) {
 					UsedKeys.Above = true;
 				}
-				if ( Event.key.keysym.sym == SDLK_LCTRL ) {
+				if ( Event.key.keysym.sym == KeyBelow ) {
 					UsedKeys.Below = true;
 				}
 
-				if ( Event.key.keysym.sym == SDLK_z ) {
+				if ( Event.key.keysym.sym == KeyPlace ) {
 					UsedKeys.Place = true;
 				}
-				if ( Event.key.keysym.sym == SDLK_x ) {
+				if ( Event.key.keysym.sym == KeyBreak ) {
 					UsedKeys.Break = true;
 				}
 			}
 		}
 		EventHandle();
-		SetCamera();
-		DrawMap( ChunksNum );
-		DrawCursor();
-		if ( DebugMode ) {
-			DrawDebug();
-		}
-
-		if ( !FlipScreen( Screen ) ) {
-			return 1;
+		if ( Redraw ) {
+			SDL_FillRect( Screen, &Screen->clip_rect, SDL_MapRGB( Screen->format, 0xFF, 0xFF, 0xFF ) );
+			SetCamera();
+			DrawMap( ChunksNum );
+			DrawCursor();
+			if ( DebugMode ) {
+				DrawDebug();
+			}
+			if ( !FlipScreen( Screen ) ) {
+				return 1;
+			}
+			Redraw = false;
 		}
 		SDL_Delay( 16 ); // TODO: proper framerate management
 	}

@@ -6,8 +6,9 @@ BloccSpacc is a portable isometric voxel sandbox game, mainly focused on buildin
 
 - [x] Breaking/placing blocks
 - [ ] View mode / Edit mode
-- [ ] Moving cursor in all 3 axis
+- [x] Moving cursor in all 3 axis (camera needs a fix to keep the cursor centered when it moves on Y)
 - [ ] Rotating view
+- [ ] HUD for selected blocks, view options, ...
 - [ ] Inventory
 - [ ] "Layer view" (showing and moving only on 2 axis at a time, hiding other layers) for complex buildings
 - [ ] Saving+Loading maps
@@ -15,6 +16,7 @@ BloccSpacc is a portable isometric voxel sandbox game, mainly focused on buildin
 - [ ] Water+Lava physics
 - [ ] Random terrain generation
 - [ ] Day/Night cycle
+- [ ] Lighting
 - [ ] Infinite maps (?)
 - [ ] Sounds
 - [ ] Screenshots
