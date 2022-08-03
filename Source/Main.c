@@ -26,8 +26,6 @@ SDL_Surface * DebugMsg = NULL;
 TTF_Font * DebugFont = NULL;
 SDL_Color DebugTextColor = { 80, 80, 80 };
 
-#define ChunkSize 8
-
 bool Quit, DebugMode;
 
 struct UsedKeys {

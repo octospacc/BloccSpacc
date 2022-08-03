@@ -3,6 +3,7 @@
 
 #define BlocksetNum 5
 #define BlockSize 32
+#define ChunkSize 16
 
 struct Block {
 	int Id;
