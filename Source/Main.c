@@ -13,6 +13,7 @@
 #define ScreenBits 16
 int ScreenWidth = 512;
 int ScreenHeight = 512;
+#define GameTick 30
 
 SDL_Surface * Screen = NULL;
 SDL_Event Event;
@@ -28,6 +29,18 @@ TTF_Font * DebugFont = NULL;
 SDL_Color DebugTextColor = { 80, 80, 80 };
 
 bool Quit, Redraw, DebugMode;
+
+// <https://www.libsdl.org/release/SDL-1.2.15/docs/html/guidetimeexamples.html>
+static Uint32 NextTime;
+Uint32 TimeLeft() {
+	Uint32 Now;
+	Now = SDL_GetTicks();
+	if ( NextTime <= Now ) {
+		return 0;
+	} else {
+		return NextTime - Now;
+	}
+}
 
 struct UsedKeys {
 	bool Up, Down, Left, Right, Above, Below;
@@ -259,6 +272,7 @@ int main( int argc, char* args[] ) {
 	Redraw = true;
 
 	while ( !Quit ) {
+		NextTime = SDL_GetTicks() + GameTick;
 		while ( SDL_PollEvent( & Event ) ) {
 			Redraw = true;
 			if ( Event.type == SDL_QUIT ) {
@@ -321,7 +335,8 @@ int main( int argc, char* args[] ) {
 			}
 			Redraw = false;
 		}
-		SDL_Delay( 16 ); // TODO: proper framerate management
+		SDL_Delay( TimeLeft() );
+        NextTime += GameTick;
 	}
 
 	printf("[I] Exiting!\n");
