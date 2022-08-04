@@ -4,11 +4,12 @@
 #define		KeyDown			SDLK_DOWN
 #define		KeyLeft			SDLK_LEFT
 #define		KeyRight		SDLK_RIGHT
-#define		KeyEsc			SDLK_ESCAPE
 #define		KeyDebug		SDLK_F3
 
 #ifdef Target_PocketGo
 
+#define		KeyEsc			SDLK_RCTRL		// Reset
+#define		KeyInventory	SDLK_ESCAPE		// Select
 #define		KeyGenFlatMap	SDLK_LSHIFT		// X
 #define		KeyGenNoiseMap	SDLK_SPACE		// Y
 #define		KeyAbove		SDLK_LALT		// A
@@ -18,6 +19,8 @@
 
 #else
 
+#define		KeyEsc			SDLK_ESCAPE
+#define		KeyInventory	SDLK_i
 #define		KeyGenFlatMap	SDLK_F6
 #define		KeyGenNoiseMap	SDLK_F7
 #define		KeyAbove		SDLK_LSHIFT

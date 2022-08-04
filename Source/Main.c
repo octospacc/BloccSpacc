@@ -11,10 +11,9 @@
 
 #define AppName "BloccSpacc"
 
-#define GameTick 30
-
 SDL_Surface * Screen = NULL;
 SDL_Event Event;
+#define GameTick 30
 
 SDL_Surface * Cursorset = NULL;
 #define CursorsNum 2
@@ -26,17 +25,19 @@ SDL_Surface * DebugMsg = NULL;
 TTF_Font * DebugFont = NULL;
 SDL_Color DebugTextColor = { 80, 80, 80 };
 
+int SelectedBlock;
+bool InGame, InTitleMenu, InInventory;
 bool Quit, Recalc, DebugMode;
 
 // <https://www.libsdl.org/release/SDL-1.2.15/docs/html/guidetimeexamples.html>
-static Uint32 NextTime;
-Uint32 TimeLeft() {
+static Uint32 NextTickTime;
+Uint32 CalcTimeLeft() {
 	Uint32 Now;
 	Now = SDL_GetTicks();
-	if ( NextTime <= Now ) {
+	if ( NextTickTime <= Now ) {
 		return 0;
 	} else {
-		return NextTime - Now;
+		return NextTickTime - Now;
 	}
 }
 
@@ -58,7 +59,7 @@ struct xyz GetBlocksOnScreenNum() {
 	return Num;
 }
 
-bool Init() {
+bool SysInit() {
 	if ( SDL_Init ( SDL_INIT_EVERYTHING ) != 0 ) {
 		printf("[E] Error initializing SDL.\n");
 		return false;
@@ -139,10 +140,10 @@ void EventHandle() {
 		MoveCursor( 9 );
 	}
 	if ( UsedKeys.Place ) {
-		Map[CursorPos.y/BlockSize][CursorPos.z/BlockSize][CursorPos.x/BlockSize] = 0;
+		Map[CursorPos.y/BlockSize][CursorPos.z/BlockSize][CursorPos.x/BlockSize] = SelectedBlock;
 	}
 	if ( UsedKeys.Break ) {
-		Map[CursorPos.y/BlockSize][CursorPos.z/BlockSize][CursorPos.x/BlockSize] = 3;
+		Map[CursorPos.y/BlockSize][CursorPos.z/BlockSize][CursorPos.x/BlockSize] = 0;
 	}
 	UsedKeys.Up = false;
 	UsedKeys.Down = false;
@@ -154,7 +155,11 @@ void EventHandle() {
 	UsedKeys.Break = false;
 }
 
-void DrawMap( struct xyz ChunksNum ) { // TODO: Reoptimize this to draw only visible blocks
+void DrawInventory() {
+
+}
+
+void DrawMap() { // TODO: Reoptimize this to draw only visible blocks
 	for ( int y = 0; y < ChunksNum.y; y++ ) {
 		for ( int z = 0; z < ChunksNum.z; z++ ) {
 			for ( int x = 0; x < ChunksNum.x; x++ ) {
@@ -174,17 +179,29 @@ void SetCamera() {
 	int y = ( CursorPos.y + BlockSize/2 );
 	int z = ( CursorPos.z + BlockSize/2 );
 	struct xyz xyz = OrthoToIso ( x, y, z, 1 );
-    Camera.x = xyz.x - ScreenWidth/2;
-    Camera.z = xyz.z - ScreenHeight*0.80;
+	Camera.x = xyz.x - ScreenWidth/2;
+	Camera.z = xyz.z - ScreenHeight*0.80;
+}
+
+int GetCursorState() {
+/*
+	if ( CursorPos.y < BlockSize * (ChunksNum.y - 1) ) {
+		return -1;
+	}
+*/
+	return 1;
 }
 
 void DrawCursor() {
 	struct xyz CursorCoords = OrthoToIso ( CursorPos.x, CursorPos.y, CursorPos.z, 1 );
-	DrawSurf(
-		CursorCoords.x - Camera.x - BlockSize/2,
-		CursorCoords.z - Camera.z - BlockSize/2 - CursorPos.y/2,
-		Cursorset, & Cursors [1], Screen
-	);
+	int CursorState = GetCursorState();
+	if ( CursorState != -1 ) {
+		DrawSurf(
+			CursorCoords.x - Camera.x - BlockSize/2,
+			CursorCoords.z - Camera.z - BlockSize/2 - CursorPos.y/2,
+			Cursorset, & Cursors [CursorState], Screen
+		);
+	}
 }
 
 void DrawDebug() { // There's a memory leak somewhere here
@@ -232,22 +249,10 @@ void SetRandomNoiseMap() {
 	}
 }
 
-int main( int argc, char* args[] ) {
-	printf("[I] Starting!\n");
-	srand( time( NULL ) );
-
-	if ( !Init() ) {
-		printf("[E] Error initializing SDL.\n");
-		return 1;
-	}
-	if ( !LoadAssets() ) {
-		printf("[E] Error loading assets.\n");
-		return 1;
-	}
-
+void GameInit() {
 	for ( int i = 0; i < CursorsNum; i++ ) {
-		Cursors [i].x = 0;
-		Cursors [i].y = BlockSize * i;
+		Cursors [i].x = BlockSize * i;
+		Cursors [i].y = 0;
 		Cursors [i].w = BlockSize;
 		Cursors [i].h = BlockSize;
 	}
@@ -264,57 +269,82 @@ int main( int argc, char* args[] ) {
 
 	SetRandomNoiseMap();
 	CursorPos.x = BlockSize * (ChunksNum.x - 1);
-	CursorPos.y = 0;
+	CursorPos.y = BlockSize * (ChunksNum.y - 1);
 	CursorPos.z = BlockSize * (ChunksNum.z - 1);
 
+	SelectedBlock = 2;
 	Recalc = true;
+	InGame = true;
+}
+
+int main( int argc, char* args[] ) {
+	printf("[I] Starting!\n");
+	srand( time( NULL ) );
+
+	if ( !SysInit() ) {
+		printf("[E] Error initializing SDL.\n");
+		return 1;
+	}
+	if ( !LoadAssets() ) {
+		printf("[E] Error loading assets.\n");
+		return 1;
+	}
+	GameInit();
 
 	while ( !Quit ) {
-		NextTime = SDL_GetTicks() + GameTick;
+		NextTickTime = SDL_GetTicks() + GameTick;
 		while ( SDL_PollEvent( & Event ) ) {
 			Recalc = true;
 			if ( Event.type == SDL_QUIT ) {
 				Quit = true;
 			}
-			else if ( Event.type == SDL_KEYDOWN ) {
-				if ( Event.key.keysym.sym == KeyEsc ) {
-					Quit = true;
-				}
-			}
 			else if ( Event.type == SDL_KEYUP ) {
-				if ( Event.key.keysym.sym == KeyDebug ) {
+				if ( Event.key.keysym.sym == KeyEsc ) {
+					if ( InGame && !InInventory ) {
+						Quit = true;
+					}
+					if ( InInventory ) {
+						InInventory = false;
+					}
+				}
+				else if ( Event.key.keysym.sym == KeyDebug ) {
 					DebugMode = !DebugMode;
 				}
-				if ( Event.key.keysym.sym == KeyGenFlatMap ) {
+				else if ( Event.key.keysym.sym == KeyInventory ) {
+					if ( InInventory ) {
+						InInventory = false;
+					} else {
+						InInventory = true;
+					}
+				}
+				else if ( Event.key.keysym.sym == KeyGenFlatMap ) {
 					SetSuperflatMap();
 				}
-				if ( Event.key.keysym.sym == KeyGenNoiseMap ) {
+				else if ( Event.key.keysym.sym == KeyGenNoiseMap ) {
 					SetRandomNoiseMap();
 				}
-				
-				if ( Event.key.keysym.sym == KeyUp ) {
+				else if ( Event.key.keysym.sym == KeyUp ) {
 					UsedKeys.Up = true;
 				}
-				if ( Event.key.keysym.sym == KeyRight ) {
+				else if ( Event.key.keysym.sym == KeyRight ) {
 					UsedKeys.Right = true;
 				}
-				if ( Event.key.keysym.sym == KeyDown ) {
+				else if ( Event.key.keysym.sym == KeyDown ) {
 					UsedKeys.Down = true;
 				}
-				if ( Event.key.keysym.sym == KeyLeft ) {
+				else if ( Event.key.keysym.sym == KeyLeft ) {
 					UsedKeys.Left = true;
 				}
-				if ( Event.key.keysym.sym == KeyAbove ) {
+				else if ( Event.key.keysym.sym == KeyAbove ) {
 					UsedKeys.Above = true;
 				}
-				if ( Event.key.keysym.sym == KeyBelow ) {
+				else if ( Event.key.keysym.sym == KeyBelow ) {
 					UsedKeys.Below = true;
 				}
-
-				if ( Event.key.keysym.sym == KeyPlace ) {
+				else if ( Event.key.keysym.sym == KeyPlace ) {
 					UsedKeys.Place = true;
 				}
-				if ( Event.key.keysym.sym == KeyBreak ) {
+				else if ( Event.key.keysym.sym == KeyBreak ) {
 					UsedKeys.Break = true;
 				}
 			}
@@ -322,23 +352,27 @@ int main( int argc, char* args[] ) {
 		if ( Recalc ) {
 			EventHandle();
 			SDL_FillRect( Screen, &Screen->clip_rect, SDL_MapRGB( Screen->format, 0xFF, 0xFF, 0xFF ) );
-			SetCamera();
-			DrawMap( ChunksNum );
-			DrawCursor();
-			if ( DebugMode ) {
-				DrawDebug();
+			if ( InGame && !InInventory ) {
+				SetCamera();
+				DrawMap();
+				DrawCursor();
+				if ( DebugMode ) {
+					DrawDebug();
+				}
+			}
+			if ( InInventory ) {
+				DrawInventory();
 			}
 			if ( !FlipScreen( Screen ) ) {
 				return 1;
 			}
 			Recalc = false;
 		}
-		SDL_Delay( TimeLeft() );
-        NextTime += GameTick;
+		SDL_Delay( CalcTimeLeft() );
+		NextTickTime += GameTick;
 	}
 
 	printf("[I] Exiting!\n");
 	SDL_Quit();
 	return 0;
 }
-

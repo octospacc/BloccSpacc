@@ -1,7 +1,7 @@
 #pragma once
 #include "SDL/SDL.h"
 
-#define BlocksetNum 5
+#define BlocksetNum 6
 #define BlockSize 32
 #define ChunkSize 16
 
@@ -20,4 +20,5 @@ struct Block Blocks[BlocksetNum] = {
 	{ 2, "Black", {}, 0, false, false },
 	{ 3, "Gray", {}, 0, false, false },
 	{ 4, "Green", {}, 0, false, false },
+	{ 5, "Blue", {}, 0, false, false },
 };

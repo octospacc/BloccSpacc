@@ -2,6 +2,10 @@
 
 BloccSpacc is a portable isometric voxel sandbox game, mainly focused on building.
 
+### Development status and compatibility note
+
+The game is still in heavy development. Edges are rough, stuff might break from one day to the other, saved maps might not work across new versions, and support for different platforms might break between updates. Play at your own risk.
+
 ### Development status / roadmap:
 
 - [x] Breaking/placing blocks
@@ -15,8 +19,8 @@ BloccSpacc is a portable isometric voxel sandbox game, mainly focused on buildin
 - [ ] Zooming in/out on the map
 - [ ] Water+Lava physics
 - [ ] Random terrain generation
+- [ ] Lighting/shading (it's hard to see some blocks on different layers)
 - [ ] Day/Night cycle
-- [ ] Lighting
 - [ ] Infinite maps (?)
 - [ ] Sounds
 - [ ] Screenshots
@@ -28,3 +32,12 @@ BloccSpacc is a portable isometric voxel sandbox game, mainly focused on buildin
 - [ ] Refined inputs
 - [ ] Customize memory allocation
 - [ ] Customize controls
+
+### Current and planned platforms
+
+- [x] Desktop GNU+Linux (main development platform)
+- [x] Miyoo CFW Linux (tested on PocketGo)
+- [ ] Android
+- [ ] Win32 (Windows 95 and up)
+- [ ] Nintendo GBA
+- [ ] Symbian
