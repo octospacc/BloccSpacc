@@ -156,7 +156,21 @@ void EventHandle() {
 }
 
 void DrawInventory() {
-
+	DebugMsg = TTF_RenderText_Blended( DebugFont, "Inventory", DebugTextColor );
+	DrawSurf( ScreenWidth/2 - 4*9, 8, DebugMsg, NULL, Screen );
+	int s;
+	int y = 0;
+	for ( int i = 0; i < BlocksetNum-1; i++ ) {
+		s += 1;
+		int x = ScreenWidth/16 + s*BlockSize + s*BlockSize/4;
+		if ( x >= ScreenWidth - BlockSize - BlockSize/4 ) {
+			y += BlockSize + BlockSize/4;
+			x = ScreenWidth/16;
+			s = 0;
+		}
+		DrawSurf( x, y, BlocksImg, &Blocks[i+1].Img, Screen );
+	}
+	DrawOutlineRect ( SDL_Surface * Dst );
 }
 
 void DrawMap() { // TODO: Reoptimize this to draw only visible blocks
@@ -351,7 +365,7 @@ int main( int argc, char* args[] ) {
 		}
 		if ( Recalc ) {
 			EventHandle();
-			SDL_FillRect( Screen, &Screen->clip_rect, SDL_MapRGB( Screen->format, 0xFF, 0xFF, 0xFF ) );
+			FillSurfRGB ( 0xFF, 0xFF, 0xFF, Screen );
 			if ( InGame && !InInventory ) {
 				SetCamera();
 				DrawMap();

@@ -28,6 +28,14 @@ void DrawSurf ( int x, int y, SDL_Surface * Src, SDL_Rect * Clip, SDL_Surface * 
 	SDL_BlitSurface( Src, Clip, Dst, &Offset );
 }
 
+void FillSurfRGB ( int R, int G, int B, SDL_Surface * Dst ) {
+	SDL_FillRect( Dst, &Dst->clip_rect, SDL_MapRGB( Dst->format, R, G, B ) );
+}
+
+void DrawOutlineRect ( SDL_Surface * Dst ) {
+	SDL_FillRect( Dst, 8, 8, 4, 16, SDL_MapRGB( Dst->format, 0x00, 0x00, 0x00 ) );
+}
+
 SDL_Surface * ScreenSet ( int Width, int Height, int Bits, SDL_Surface * Screen ) {
 	Screen = SDL_SetVideoMode ( Width, Height, Bits, 
 	#ifdef Target_PocketGo
