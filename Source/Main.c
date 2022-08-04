@@ -31,6 +31,7 @@ bool Quit, Recalc, DebugMode;
 
 // <https://www.libsdl.org/release/SDL-1.2.15/docs/html/guidetimeexamples.html>
 static Uint32 NextTickTime;
+static Uint32 InputTickTime;
 Uint32 CalcTimeLeft() {
 	Uint32 Now;
 	Now = SDL_GetTicks();
@@ -169,8 +170,11 @@ void DrawInventory() {
 			s = 0;
 		}
 		DrawSurf( x, y, BlocksImg, &Blocks[i+1].Img, Screen );
+		if ( SelectedBlock == i+1 ) {
+			int Margin = BlockSize/8;
+			DrawOutlineRect( x-Margin, y-Margin, BlockSize+2*Margin, BlockSize+2*Margin, 4, 0x00, 0x00, 0x00, Screen );
+		}
 	}
-	DrawOutlineRect ( SDL_Surface * Dst );
 }
 
 void DrawMap() { // TODO: Reoptimize this to draw only visible blocks
@@ -291,6 +295,13 @@ void GameInit() {
 	InGame = true;
 }
 
+void KeyListen() {
+	Uint8 * Keys = SDL_GetKeyState( NULL );
+	if ( Keys [KeyUp] ) {
+		UsedKeys.Up = 1;
+	}
+}
+
 int main( int argc, char* args[] ) {
 	printf("[I] Starting!\n");
 	srand( time( NULL ) );
@@ -338,7 +349,7 @@ int main( int argc, char* args[] ) {
 					SetRandomNoiseMap();
 				}
 				else if ( Event.key.keysym.sym == KeyUp ) {
-					UsedKeys.Up = true;
+					//UsedKeys.Up = true;
 				}
 				else if ( Event.key.keysym.sym == KeyRight ) {
 					UsedKeys.Right = true;
@@ -363,8 +374,12 @@ int main( int argc, char* args[] ) {
 				}
 			}
 		}
-		if ( Recalc ) {
+
+		if ( InputTickTime % ( GameTick*3 ) == 0 ) {
 			EventHandle();
+		}
+		if ( Recalc ) {
+				KeyListen();
 			FillSurfRGB ( 0xFF, 0xFF, 0xFF, Screen );
 			if ( InGame && !InInventory ) {
 				SetCamera();
@@ -382,8 +397,10 @@ int main( int argc, char* args[] ) {
 			}
 			Recalc = false;
 		}
+		printf("%d\n", InputTickTime);
 		SDL_Delay( CalcTimeLeft() );
 		NextTickTime += GameTick;
+		InputTickTime += GameTick;
 	}
 
 	printf("[I] Exiting!\n");

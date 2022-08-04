@@ -4,7 +4,7 @@
 SDL_Surface * LoadImage ( char * FilePath );
 void DrawSurf ( int x, int y, SDL_Surface * Src, SDL_Rect * Clip, SDL_Surface * Dst );
 void FillSurfRGB ( int R, int G, int B, SDL_Surface * Dst );
-void DrawOutlineRect ( SDL_Surface * Dst );
+void DrawOutlineRect ( int x, int y, int w, int h, int Size, int R, int G, int B, SDL_Surface * Dst );
 SDL_Surface * ScreenSet ( int Width, int Height, int Bits, SDL_Surface * Screen );
 bool FlipScreen( SDL_Surface * Screen );
 

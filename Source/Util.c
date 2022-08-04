@@ -32,8 +32,26 @@ void FillSurfRGB ( int R, int G, int B, SDL_Surface * Dst ) {
 	SDL_FillRect( Dst, &Dst->clip_rect, SDL_MapRGB( Dst->format, R, G, B ) );
 }
 
-void DrawOutlineRect ( SDL_Surface * Dst ) {
-	SDL_FillRect( Dst, 8, 8, 4, 16, SDL_MapRGB( Dst->format, 0x00, 0x00, 0x00 ) );
+void DrawOutlineRect ( int x, int y, int w, int h, int Size, int R, int G, int B, SDL_Surface * Dst ) {
+	SDL_Rect Rect;
+	Rect.x = x;
+	Rect.y = y;
+	Rect.w = w;
+	Rect.h = Size;
+	SDL_FillRect( Dst, &Rect, SDL_MapRGB( Dst->format, R, G, B ) );
+	Rect.w = Size;
+	Rect.h = h;
+	SDL_FillRect( Dst, &Rect, SDL_MapRGB( Dst->format, R, G, B ) );
+	Rect.x = x;
+	Rect.y = y+h-Size;
+	Rect.w = w;
+	Rect.h = Size;
+	SDL_FillRect( Dst, &Rect, SDL_MapRGB( Dst->format, R, G, B ) );
+	Rect.x = x+w-Size;
+	Rect.y = y;
+	Rect.w = Size;
+	Rect.h = h;
+	SDL_FillRect( Dst, &Rect, SDL_MapRGB( Dst->format, R, G, B ) );
 }
 
 SDL_Surface * ScreenSet ( int Width, int Height, int Bits, SDL_Surface * Screen ) {
