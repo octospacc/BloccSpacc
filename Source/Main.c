@@ -31,7 +31,6 @@ bool Quit, Recalc, DebugMode;
 
 // <https://www.libsdl.org/release/SDL-1.2.15/docs/html/guidetimeexamples.html>
 static Uint32 NextTickTime;
-static Uint32 InputTickTime;
 Uint32 CalcTimeLeft() {
 	Uint32 Now;
 	Now = SDL_GetTicks();
@@ -45,6 +44,7 @@ Uint32 CalcTimeLeft() {
 struct UsedKeys {
 	bool Up, Down, Left, Right, Above, Below;
 	bool Place, Break;
+	bool Esc, Inventory;
 } UsedKeys;
 
 struct xyz CursorPos, Camera, ChunksNum;
@@ -122,29 +122,48 @@ void MoveCursor (int Direction) {
 }
 
 void EventHandle() {
-	if ( UsedKeys.Up ) {
-		MoveCursor( 0 );
+	if ( InGame && !InInventory ) {
+		if ( UsedKeys.Esc ) {
+			Quit = true;
+		}
+		if ( UsedKeys.Inventory ) {
+			InInventory = true;
+		}
+		if ( UsedKeys.Up ) {
+			MoveCursor( 0 );
+		}
+		if ( UsedKeys.Right ) {
+			MoveCursor( 2 );
+		}
+		if ( UsedKeys.Down ) {
+			MoveCursor( 4 );
+		}
+		if ( UsedKeys.Left ) {
+			MoveCursor( 6 );
+		}
+		if ( UsedKeys.Above) {
+			MoveCursor( 8 );
+		}
+		if ( UsedKeys.Below ) {
+			MoveCursor( 9 );
+		}
+		if ( UsedKeys.Place ) {
+			Map[CursorPos.y/BlockSize][CursorPos.z/BlockSize][CursorPos.x/BlockSize] = SelectedBlock;
+		}
+		if ( UsedKeys.Break ) {
+			Map[CursorPos.y/BlockSize][CursorPos.z/BlockSize][CursorPos.x/BlockSize] = 0;
+		}
 	}
-	if ( UsedKeys.Right ) {
-		MoveCursor( 2 );
-	}
-	if ( UsedKeys.Down ) {
-		MoveCursor( 4 );
-	}
-	if ( UsedKeys.Left ) {
-		MoveCursor( 6 );
-	}
-	if ( UsedKeys.Above) {
-		MoveCursor( 8 );
-	}
-	if ( UsedKeys.Below ) {
-		MoveCursor( 9 );
-	}
-	if ( UsedKeys.Place ) {
-		Map[CursorPos.y/BlockSize][CursorPos.z/BlockSize][CursorPos.x/BlockSize] = SelectedBlock;
-	}
-	if ( UsedKeys.Break ) {
-		Map[CursorPos.y/BlockSize][CursorPos.z/BlockSize][CursorPos.x/BlockSize] = 0;
+	else if ( InInventory ) {
+		if ( UsedKeys.Esc || UsedKeys.Inventory ) {
+			InInventory = false;
+		}
+		if ( UsedKeys.Left && SelectedBlock > 1 ) {
+			SelectedBlock--;
+		}
+		if ( UsedKeys.Right && SelectedBlock < BlocksetNum-1 ) {
+			SelectedBlock++;
+		}
 	}
 	UsedKeys.Up = false;
 	UsedKeys.Down = false;
@@ -154,6 +173,8 @@ void EventHandle() {
 	UsedKeys.Below = false;
 	UsedKeys.Place = false;
 	UsedKeys.Break = false;
+	UsedKeys.Esc = false;
+	UsedKeys.Inventory = false;
 }
 
 void DrawInventory() {
@@ -295,16 +316,6 @@ void GameInit() {
 	InGame = true;
 }
 
-void KeyListen() {
-	Uint8 * Keys = SDL_GetKeyState( NULL );
-	if ( Keys [KeyUp] ) {
-		UsedKeys.Up = 1;
-	}
-	if ( Keys [KeyDown] ) {
-		UsedKeys.Down = 1;
-	}
-}
-
 int main( int argc, char* args[] ) {
 	printf("[I] Starting!\n");
 	srand( time( NULL ) );
@@ -322,31 +333,19 @@ int main( int argc, char* args[] ) {
 	while ( !Quit ) {
 		NextTickTime = SDL_GetTicks() + GameTick;
 		while ( SDL_PollEvent( & Event ) ) {
-			//Recalc = true;
 			if ( Event.type == SDL_QUIT ) {
 				Quit = true;
 			}
-			else if ( Event.type == SDL_KEYDOWN ) {
-				Recalc = true;
-			}
 			else if ( Event.type == SDL_KEYUP ) {
+				Recalc = true;
 				if ( Event.key.keysym.sym == KeyEsc ) {
-					if ( InGame && !InInventory ) {
-						Quit = true;
-					}
-					if ( InInventory ) {
-						InInventory = false;
-					}
+					UsedKeys.Esc = true;
 				}
 				else if ( Event.key.keysym.sym == KeyDebug ) {
 					DebugMode = !DebugMode;
 				}
 				else if ( Event.key.keysym.sym == KeyInventory ) {
-					if ( InInventory ) {
-						InInventory = false;
-					} else {
-						InInventory = true;
-					}
+					UsedKeys.Inventory = true;
 				}
 				else if ( Event.key.keysym.sym == KeyGenFlatMap ) {
 					SetSuperflatMap();
@@ -355,13 +354,13 @@ int main( int argc, char* args[] ) {
 					SetRandomNoiseMap();
 				}
 				else if ( Event.key.keysym.sym == KeyUp ) {
-					//UsedKeys.Up = true;
+					UsedKeys.Up = true;
 				}
 				else if ( Event.key.keysym.sym == KeyRight ) {
 					UsedKeys.Right = true;
 				}
 				else if ( Event.key.keysym.sym == KeyDown ) {
-					//UsedKeys.Down = true;
+					UsedKeys.Down = true;
 				}
 				else if ( Event.key.keysym.sym == KeyLeft ) {
 					UsedKeys.Left = true;
@@ -380,11 +379,7 @@ int main( int argc, char* args[] ) {
 				}
 			}
 		}
-		KeyListen();
-		if ( InputTickTime % ( GameTick*4 ) == 0 ) {
-			EventHandle();
-			//Recalc = false;
-		}
+		EventHandle();
 		if ( Recalc ) {
 			FillSurfRGB ( 0xFF, 0xFF, 0xFF, Screen );
 			if ( InGame && !InInventory ) {
@@ -403,10 +398,8 @@ int main( int argc, char* args[] ) {
 			}
 			Recalc = false;
 		}
-		printf("%d\n", InputTickTime);
 		SDL_Delay( CalcTimeLeft() );
 		NextTickTime += GameTick;
-		InputTickTime += GameTick;
 	}
 
 	printf("[I] Exiting!\n");
