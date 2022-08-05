@@ -300,6 +300,9 @@ void KeyListen() {
 	if ( Keys [KeyUp] ) {
 		UsedKeys.Up = 1;
 	}
+	if ( Keys [KeyDown] ) {
+		UsedKeys.Down = 1;
+	}
 }
 
 int main( int argc, char* args[] ) {
@@ -319,9 +322,12 @@ int main( int argc, char* args[] ) {
 	while ( !Quit ) {
 		NextTickTime = SDL_GetTicks() + GameTick;
 		while ( SDL_PollEvent( & Event ) ) {
-			Recalc = true;
+			//Recalc = true;
 			if ( Event.type == SDL_QUIT ) {
 				Quit = true;
+			}
+			else if ( Event.type == SDL_KEYDOWN ) {
+				Recalc = true;
 			}
 			else if ( Event.type == SDL_KEYUP ) {
 				if ( Event.key.keysym.sym == KeyEsc ) {
@@ -355,7 +361,7 @@ int main( int argc, char* args[] ) {
 					UsedKeys.Right = true;
 				}
 				else if ( Event.key.keysym.sym == KeyDown ) {
-					UsedKeys.Down = true;
+					//UsedKeys.Down = true;
 				}
 				else if ( Event.key.keysym.sym == KeyLeft ) {
 					UsedKeys.Left = true;
@@ -374,12 +380,12 @@ int main( int argc, char* args[] ) {
 				}
 			}
 		}
-
-		if ( InputTickTime % ( GameTick*3 ) == 0 ) {
+		KeyListen();
+		if ( InputTickTime % ( GameTick*4 ) == 0 ) {
 			EventHandle();
+			//Recalc = false;
 		}
 		if ( Recalc ) {
-				KeyListen();
 			FillSurfRGB ( 0xFF, 0xFF, 0xFF, Screen );
 			if ( InGame && !InInventory ) {
 				SetCamera();
