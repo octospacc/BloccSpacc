@@ -1,11 +1,12 @@
 #include <stdbool.h>
-#include "SDL/SDL.h"
-#include "SDL/SDL_image.h"
+#include "LibMultiSpacc/MultiSpacc.h"
+//#include "SDL/SDL.h"
+//#include "SDL/SDL_image.h"
 
 SDL_Surface * LoadImage ( char * FilePath ) {
 	SDL_Surface * a = NULL;
 	SDL_Surface * b = NULL;
-	a = IMG_Load ( FilePath );
+	a = IMG_Load ( FilePath );///*
 	if ( a == NULL ) {
 		printf("[E] Error reading image %s.\n", FilePath);
 	} else {
@@ -15,10 +16,10 @@ SDL_Surface * LoadImage ( char * FilePath ) {
 			printf("[E] Error adapting image %s.\n", FilePath);
 		} else {
 			Uint32 ColorKey = SDL_MapRGB( b->format, 0xFF, 0x00, 0xFF ); // Magenta
-			SDL_SetColorKey( b, SDL_SRCCOLORKEY, ColorKey );
+			MultiSpacc_SetColorKey( b, true, ColorKey );
 		}
 	}
-	return b;
+	return b;//*/return a;
 }
 
 void DrawSurf ( int x, int y, SDL_Surface * Src, SDL_Rect * Clip, SDL_Surface * Dst ) {
@@ -59,10 +60,10 @@ SDL_Surface * ScreenSet ( int Width, int Height, int Bits, SDL_Surface * Screen 
 	#ifdef Target_PocketGo
 		SDL_HWSURFACE
 	#else
-		//SDL_SWSURFACE //|
-		SDL_HWSURFACE |
-		SDL_DOUBLEBUF |
-		SDL_RESIZABLE //|
+		SDL_SWSURFACE //|
+		//SDL_HWSURFACE |
+		//SDL_DOUBLEBUF |
+		//SDL_RESIZABLE //|
 		//SDL_FULLSCREEN //|
 	#endif
 	);

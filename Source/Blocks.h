@@ -1,5 +1,6 @@
 #pragma once
-#include "SDL/SDL.h"
+#include "LibMultiSpacc/MultiSpacc.h"
+//#include "SDL/SDL.h"
 
 #define BlocksetNum 6
 #define BlockSize 32

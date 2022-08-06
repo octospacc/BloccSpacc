@@ -13,7 +13,7 @@ The game is still in heavy development. Edges are rough, stuff might break from 
 - [x] Moving cursor in all 3 axis (camera needs a fix to keep the cursor centered when it moves on Y)
 - [ ] Rotating view
 - [ ] HUD for selected blocks, view options, ...
-- [ ] Inventory
+- [x] Inventory
 - [ ] "Layer view" (showing and moving only on 2 axis at a time, hiding other layers) for complex buildings
 - [ ] Saving+Loading maps
 - [ ] Zooming in/out on the map
@@ -34,6 +34,8 @@ The game is still in heavy development. Edges are rough, stuff might break from 
 - [ ] Customize controls
 
 ### Current and planned platforms
+
+_Note: This project, and its portability, depend on [LibMultiSpacc](https://gitlab.com/octospacc/LibMultiSpacc)._
 
 - [x] Desktop GNU+Linux (main development platform)
 - [x] Miyoo CFW Linux (tested on PocketGo)

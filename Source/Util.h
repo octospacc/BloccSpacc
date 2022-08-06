@@ -1,5 +1,6 @@
 #pragma once
 #include <stdbool.h>
+#include "LibMultiSpacc/MultiSpacc.h"
 
 SDL_Surface * LoadImage ( char * FilePath );
 void DrawSurf ( int x, int y, SDL_Surface * Src, SDL_Rect * Clip, SDL_Surface * Dst );

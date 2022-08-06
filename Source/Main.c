@@ -1,9 +1,10 @@
 #include <time.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include "SDL/SDL.h"
-#include "SDL/SDL_image.h"
-#include "SDL/SDL_ttf.h"
+#include "LibMultiSpacc/MultiSpacc.h"
+//#include "SDL/SDL.h"
+//#include "SDL/SDL_image.h"
+//#include "SDL/SDL_ttf.h"
 #include "TargetsConfigs.h"
 #include "Blocks.h"
 #include "Keys.h"
@@ -74,21 +75,22 @@ bool SysInit() {
 		printf("[E] Error initializing SDL_TTF.\n");
 		return false;
 	}
-	SDL_WM_SetCaption ( AppName, "Assets/Icon.png" );
+	MultiSpacc_SetAppTitle( Screen, AppName );
+	MultiSpacc_SetAppIcon( Screen, LoadImage( "Assets/Cursorset.png" ) );
 	return true;
 }
 
 bool LoadAssets() {
 	bool Error = false;
-	Cursorset = LoadImage ( "Assets/Cursorset.png" );
+	Cursorset = LoadImage( "Assets/Cursorset.png" );
 	if ( Cursorset == NULL ) {
 		Error = true;
 	}
-	BlocksImg = LoadImage ( "Assets/Blocks.png" );
+	BlocksImg = LoadImage( "Assets/Blocks.png" );
 	if ( BlocksImg == NULL ) {
 		Error = true;
 	}
-	DebugFont = TTF_OpenFont ( "Assets/LiberationMono-Regular.ttf", 12 );
+	DebugFont = TTF_OpenFont( "Assets/LiberationMono-Regular.ttf", 12 );
 	if ( DebugFont == NULL ) {
 		Error = true;
 	}
@@ -99,7 +101,7 @@ bool LoadAssets() {
 	return true;
 }
 
-void MoveCursor (int Direction) {
+void MoveCursor( int Direction ) {
 	if ( Direction == 0 && CursorPos.z > 0 ) { // Up
 		CursorPos.z -= BlockSize;
 	}
