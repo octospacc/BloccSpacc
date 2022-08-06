@@ -2,12 +2,12 @@
 #include <stdbool.h>
 #include "LibMultiSpacc/MultiSpacc.h"
 
-SDL_Surface * LoadImage ( char * FilePath );
+SDL_Surface * LoadImage ( char *FilePath, MultiSpacc_Surface *Screen );
 void DrawSurf ( int x, int y, SDL_Surface * Src, SDL_Rect * Clip, SDL_Surface * Dst );
 void FillSurfRGB ( int R, int G, int B, SDL_Surface * Dst );
 void DrawOutlineRect ( int x, int y, int w, int h, int Size, int R, int G, int B, SDL_Surface * Dst );
-SDL_Surface * ScreenSet ( int Width, int Height, int Bits, SDL_Surface * Screen );
-bool FlipScreen( SDL_Surface * Screen );
+//SDL_Surface * ScreenSet ( int Width, int Height, int Bits, SDL_Surface * Screen );
+bool FlipScreen( MultiSpacc_Window * Window );
 
 struct xyz {
 	int x, y, z;

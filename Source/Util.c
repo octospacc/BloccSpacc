@@ -3,14 +3,14 @@
 //#include "SDL/SDL.h"
 //#include "SDL/SDL_image.h"
 
-SDL_Surface * LoadImage ( char * FilePath ) {
-	SDL_Surface * a = NULL;
-	SDL_Surface * b = NULL;
+SDL_Surface * LoadImage ( char *FilePath, MultiSpacc_Surface *Screen ) {
+	SDL_Surface *a = NULL;
+	SDL_Surface *b = NULL;
 	a = IMG_Load ( FilePath );///*
 	if ( a == NULL ) {
 		printf("[E] Error reading image %s.\n", FilePath);
 	} else {
-		b = SDL_DisplayFormat ( a );
+		b = SDL_ConvertSurface( a, Screen->format, 0 ); //SDL_DisplayFormat ( a );
 		SDL_FreeSurface ( a );
 		if ( b == NULL ) {
 			printf("[E] Error adapting image %s.\n", FilePath);
@@ -55,6 +55,7 @@ void DrawOutlineRect ( int x, int y, int w, int h, int Size, int R, int G, int B
 	SDL_FillRect( Dst, &Rect, SDL_MapRGB( Dst->format, R, G, B ) );
 }
 
+/*
 SDL_Surface * ScreenSet ( int Width, int Height, int Bits, SDL_Surface * Screen ) {
 	Screen = SDL_SetVideoMode ( Width, Height, Bits, 
 	#ifdef Target_PocketGo
@@ -69,9 +70,10 @@ SDL_Surface * ScreenSet ( int Width, int Height, int Bits, SDL_Surface * Screen 
 	);
 	return Screen;
 }
+*/
 
-bool FlipScreen( SDL_Surface * Screen ) {
-	if ( SDL_Flip( Screen ) != 0 ) {
+bool FlipScreen( MultiSpacc_Window * Window ) {
+	if ( MultiSpacc_UpdateWindowSurface( Window ) != 0 ) {
 		printf("[E] Error updating screen.\n");
 		return false;
 	}

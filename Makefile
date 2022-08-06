@@ -12,7 +12,7 @@ endif
 ifdef Target
 	ifeq ($(Target), PC)
 		Defines = -DTarget_PC
-		MultiSpacc_Target = SDL12
+		MultiSpacc_Target = SDL20
 	else ifeq ($(Target), PocketGo)
 		ExeSuffix = .PocketGo.exe
 		PathPrefix = /opt/miyoo/bin/arm-miyoo-linux-uclibcgnueabi

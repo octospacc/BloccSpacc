@@ -12,7 +12,8 @@
 
 #define AppName "BloccSpacc"
 
-SDL_Surface * Screen = NULL;
+MultiSpacc_Window *Window = NULL;
+MultiSpacc_Surface *Screen = NULL;
 SDL_Event Event;
 #define GameTick 30
 
@@ -66,7 +67,8 @@ bool SysInit() {
 		printf("[E] Error initializing SDL.\n");
 		return false;
 	}
-	Screen = ScreenSet ( ScreenWidth, ScreenHeight, ScreenBits, Screen );
+	Window = MultiSpacc_SetWindow( ScreenWidth, ScreenHeight, ScreenBits, 0 );
+	Screen = MultiSpacc_GetWindowSurface( Window );
 	if ( Screen == NULL ) {
 		printf("[E] Error initializing screen.\n");
 		return false;
@@ -75,18 +77,18 @@ bool SysInit() {
 		printf("[E] Error initializing SDL_TTF.\n");
 		return false;
 	}
-	MultiSpacc_SetAppTitle( Screen, AppName );
-	MultiSpacc_SetAppIcon( Screen, LoadImage( "Assets/Cursorset.png" ) );
+	MultiSpacc_SetAppTitle( Window, AppName );
+	MultiSpacc_SetAppIcon( Window, LoadImage( "Assets/Icon.png", Screen ) );
 	return true;
 }
 
 bool LoadAssets() {
 	bool Error = false;
-	Cursorset = LoadImage( "Assets/Cursorset.png" );
+	Cursorset = LoadImage( "Assets/Cursorset.png", Screen );
 	if ( Cursorset == NULL ) {
 		Error = true;
 	}
-	BlocksImg = LoadImage( "Assets/Blocks.png" );
+	BlocksImg = LoadImage( "Assets/Blocks.png", Screen );
 	if ( BlocksImg == NULL ) {
 		Error = true;
 	}
@@ -395,7 +397,7 @@ int main( int argc, char* args[] ) {
 			if ( InInventory ) {
 				DrawInventory();
 			}
-			if ( !FlipScreen( Screen ) ) {
+			if ( !FlipScreen( Window ) ) {
 				return 1;
 			}
 			Recalc = false;
