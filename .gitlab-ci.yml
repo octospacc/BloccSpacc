@@ -1,0 +1,22 @@
+image: debian:latest
+
+before_script: |
+  apt update
+  apt install -y git
+  git clone --depth 1 https://gitlab.com/octospacc/MultiSpaccSDK
+  bash ./MultiSpaccSDK/Tools/InstallBuildEnvironment.sh
+  mv ./MultiSpaccSDK/LibMultiSpacc/LibMultiSpacc ./Source/LibMultiSpacc
+
+pages:
+  stage: deploy
+  script: |
+    make -j$(nproc --all) Target=Web
+    mkdir -p ./public
+    mv ./Emscripten.* ./public/
+    mv ./MultiSpaccSDK/LibMultiSpacc/Examples/Emscripten.html ./public/index.html
+  artifacts:
+    paths:
+      - public
+  publish: public
+  rules:
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH

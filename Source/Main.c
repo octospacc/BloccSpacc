@@ -2,29 +2,28 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include "LibMultiSpacc/MultiSpacc.h"
-//#include "SDL/SDL.h"
-//#include "SDL/SDL_image.h"
-//#include "SDL/SDL_ttf.h"
 #include "TargetsConfigs.h"
 #include "Blocks.h"
 #include "Keys.h"
 #include "Util.h"
 
+#define swcase break; case
+
 #define AppName "BloccSpacc"
 
 MultiSpacc_Window *Window = NULL;
 MultiSpacc_Surface *Screen = NULL;
-SDL_Event Event;
+MultiSpacc_Event Event;
 #define GameTick 30
 
-SDL_Surface * Cursorset = NULL;
+MultiSpacc_Surface *Cursorset = NULL;
 #define CursorsNum 2
 SDL_Rect Cursors[CursorsNum];
 
-SDL_Surface * BlocksImg = NULL;
+MultiSpacc_Surface *BlocksImg = NULL;
 
-SDL_Surface * DebugMsg = NULL;
-TTF_Font * DebugFont = NULL;
+MultiSpacc_Surface *DebugMsg = NULL;
+TTF_Font *DebugFont = NULL;
 SDL_Color DebugTextColor = { 80, 80, 80 };
 
 int SelectedBlock;
@@ -32,16 +31,16 @@ bool InGame, InTitleMenu, InInventory;
 bool Quit, Recalc, DebugMode;
 
 // <https://www.libsdl.org/release/SDL-1.2.15/docs/html/guidetimeexamples.html>
-static Uint32 NextTickTime;
+Uint32 NextTickTime;
 Uint32 CalcTimeLeft() {
 	Uint32 Now;
-	Now = SDL_GetTicks();
+	Now = MultiSpacc_GetTicks();
 	if ( NextTickTime <= Now ) {
 		return 0;
 	} else {
 		return NextTickTime - Now;
-	}
-}
+	};
+};
 
 struct UsedKeys {
 	bool Up, Down, Left, Right, Above, Below;
@@ -63,20 +62,21 @@ struct xyz GetBlocksOnScreenNum() {
 }
 
 bool SysInit() {
-	if ( SDL_Init ( SDL_INIT_EVERYTHING ) != 0 ) {
-		printf("[E] Error initializing SDL.\n");
-		return false;
-	}
-	Window = MultiSpacc_SetWindow( ScreenWidth, ScreenHeight, ScreenBits, 0 );
+	//if ( MultiSpacc_Init( SDL_INIT_EVERYTHING ) != 0 ) {
+	//	printf("[E] Error initializing Core.\n");
+	//	return false;
+	//};
+	MultiSpacc_SurfaceConfig windowConfig = {0};
+	Window = MultiSpacc_SetWindow( &windowConfig );
 	Screen = MultiSpacc_GetWindowSurface( Window );
 	if ( Screen == NULL ) {
-		printf("[E] Error initializing screen.\n");
+		printf("[E] Error initializing Video System.\n");
 		return false;
-	}
+	};
 	if( TTF_Init() != 0 ) {
-		printf("[E] Error initializing SDL_TTF.\n");
+		printf("[E] Error initializing Font System.\n");
 		return false;
-	}
+	};
 	MultiSpacc_SetAppTitle( Window, AppName );
 	MultiSpacc_SetAppIcon( Window, LoadImage( "Assets/Icon.png", Screen ) );
 	return true;
@@ -87,19 +87,19 @@ bool LoadAssets() {
 	Cursorset = LoadImage( "Assets/Cursorset.png", Screen );
 	if ( Cursorset == NULL ) {
 		Error = true;
-	}
+	};
 	BlocksImg = LoadImage( "Assets/Blocks.png", Screen );
 	if ( BlocksImg == NULL ) {
 		Error = true;
-	}
+	};
 	DebugFont = TTF_OpenFont( "Assets/LiberationMono-Regular.ttf", 12 );
 	if ( DebugFont == NULL ) {
 		Error = true;
-	}
+	};
 	if ( Error ) {
 		printf("[E] Error loading assets.\n");
 		return false;
-	}
+	};
 	return true;
 }
 
@@ -247,50 +247,54 @@ void DrawCursor() {
 	}
 }
 
-void DrawDebug() { // There's a memory leak somewhere here
-	char Str[127];
-
-	snprintf( Str, sizeof(Str), "CursorPos:  x:%d  y:%d  z:%d", CursorPos.x, CursorPos.y, CursorPos.z );
-	DebugMsg = TTF_RenderText_Blended( DebugFont, Str, DebugTextColor );
-	DrawSurf( 8, 8, DebugMsg, NULL, Screen );
-
-	snprintf( Str, sizeof(Str), "Camera:  x:%d  y:%d  z:%d", Camera.x, Camera.y, Camera.z );
-	DebugMsg = TTF_RenderText_Blended( DebugFont, Str, DebugTextColor );
-	DrawSurf( 8, 20, DebugMsg, NULL, Screen );
-
-	struct xyz CursorCoords = OrthoToIso ( CursorPos.x, CursorPos.y, CursorPos.z, 1 );
-	snprintf( Str, sizeof(Str), "CursorCoords:  x:%d  y:%d  z:%d", CursorCoords.x, CursorCoords.y, CursorCoords.z );
-	DebugMsg = TTF_RenderText_Blended( DebugFont, Str, DebugTextColor );
-	DrawSurf( 8, 32, DebugMsg, NULL, Screen );
+void DrawString( char Str[], int x, int y, TTF_Font* Font, SDL_Color Color ) {
+	MultiSpacc_Surface *MsgSurf = TTF_RenderText_Blended( Font, Str, Color );
+	DrawSurf( x, y, MsgSurf, NULL, Screen );
+	SDL_FreeSurface( MsgSurf );
 }
 
-void SetSuperflatMap() {
+void DrawDebug() {
+	char Str[128];
+
+	snprintf( Str, sizeof(Str), "CursorPos:  x:%d  y:%d  z:%d", CursorPos.x, CursorPos.y, CursorPos.z );
+	DrawString( Str, 8, 8, DebugFont, DebugTextColor );
+
+	snprintf( Str, sizeof(Str), "Camera:  x:%d  y:%d  z:%d", Camera.x, Camera.y, Camera.z );
+	DrawString( Str, 8, 20, DebugFont, DebugTextColor );
+
+	struct xyz CursorCoords = OrthoToIso( CursorPos.x, CursorPos.y, CursorPos.z, 1 );
+	snprintf( Str, sizeof(Str), "CursorCoords:  x:%d  y:%d  z:%d", CursorCoords.x, CursorCoords.y, CursorCoords.z );
+	DrawString( Str, 8, 32, DebugFont, DebugTextColor );
+}
+
+void SetSuperflatMap(){
 	for ( int z = 0; z < ChunksNum.z; z++ ) {
 		for ( int x = 0; x < ChunksNum.x; x++ ) {
 			Map[0][z][x] = 4;
-		}
-	}
+		};
+	};
 	for ( int y = 1; y < ChunksNum.y; y++ ) {
 		for ( int z = 0; z < ChunksNum.z; z++ ) {
 			for ( int x = 0; x < ChunksNum.x; x++ ) {
 				Map[y][z][x] = 0;
-			}
-		}
-	}
-}
-void SetRandomNoiseMap() {
+			};
+		};
+	};
+};
+
+void SetRandomNoiseMap(){
 	for ( int y = 0; y < ChunksNum.y; y++ ) {
 		for ( int z = 0; z < ChunksNum.z; z++ ) {
 			for ( int x = 0; x < ChunksNum.x; x++ ) {
 				int r = rand() % BlocksetNum;
 				if ( r == 1 ) { // Avoid block 1 (all white, hard to see) for testing
 					r = 2;
-				}
+				};
 				Map[y][z][x] = r;
-			}
-		}
-	}
-}
+			};
+		};
+	};
+};
 
 void GameInit() {
 	for ( int i = 0; i < CursorsNum; i++ ) {
@@ -318,95 +322,73 @@ void GameInit() {
 	SelectedBlock = 2;
 	Recalc = true;
 	InGame = true;
+};
+
+bool GameLoop ( void *args ) {
+	NextTickTime = MultiSpacc_GetTicks() + GameTick;
+	while ( MultiSpacc_PollEvent( &Event ) ) {
+		if ( Event.Type == SDL_QUIT ) {
+			Quit = true;
+		} else
+		if ( Event.Type == SDL_KEYUP ) {
+			Recalc = true;
+			switch( Event.Key ){
+				swcase KeyUp          : UsedKeys.Up        = true;
+				swcase KeyRight       : UsedKeys.Right     = true;
+				swcase KeyDown        : UsedKeys.Down      = true;
+				swcase KeyLeft        : UsedKeys.Left      = true;
+				swcase KeyAbove       : UsedKeys.Above     = true;
+				swcase KeyBelow       : UsedKeys.Below     = true;
+				swcase KeyPlace       : UsedKeys.Place     = true;
+				swcase KeyBreak       : UsedKeys.Break     = true;
+				swcase KeyEsc         : UsedKeys.Esc       = true;
+				swcase KeyInventory   : UsedKeys.Inventory = true;
+				swcase KeyDebug       : DebugMode = !DebugMode;
+				swcase KeyGenFlatMap  : SetSuperflatMap();
+				swcase KeyGenNoiseMap : SetRandomNoiseMap();
+			};
+		};
+	};
+	EventHandle();
+	if ( Recalc ) {
+		FillSurfRGB ( 0xFF, 0xFF, 0xFF, Screen );
+		if ( InGame && !InInventory ) {
+			SetCamera();
+			DrawMap();
+			DrawCursor();
+			if ( DebugMode ) {
+				DrawDebug();
+			};
+		};
+		if ( InInventory ) {
+			DrawInventory();
+		};
+		if ( !FlipScreen( Window ) ) {
+			return 1;
+		};
+		Recalc = false;
+	};
+	//MultiSpacc_Sleep( CalcTimeLeft() );
+	NextTickTime += GameTick;
+	return !Quit;
 }
 
-int main( int argc, char* args[] ) {
+int main( int argc, char *args[] ) {
 	printf("[I] Starting!\n");
 	srand( time( NULL ) );
 
 	if ( !SysInit() ) {
-		printf("[E] Error initializing SDL.\n");
+		printf("[E] Error initializing System.\n");
 		return 1;
-	}
+	};
 	if ( !LoadAssets() ) {
 		printf("[E] Error loading assets.\n");
 		return 1;
-	}
+	};
 	GameInit();
-
-	while ( !Quit ) {
-		NextTickTime = SDL_GetTicks() + GameTick;
-		while ( SDL_PollEvent( & Event ) ) {
-			if ( Event.type == SDL_QUIT ) {
-				Quit = true;
-			}
-			else if ( Event.type == SDL_KEYUP ) {
-				Recalc = true;
-				if ( Event.key.keysym.sym == KeyEsc ) {
-					UsedKeys.Esc = true;
-				}
-				else if ( Event.key.keysym.sym == KeyDebug ) {
-					DebugMode = !DebugMode;
-				}
-				else if ( Event.key.keysym.sym == KeyInventory ) {
-					UsedKeys.Inventory = true;
-				}
-				else if ( Event.key.keysym.sym == KeyGenFlatMap ) {
-					SetSuperflatMap();
-				}
-				else if ( Event.key.keysym.sym == KeyGenNoiseMap ) {
-					SetRandomNoiseMap();
-				}
-				else if ( Event.key.keysym.sym == KeyUp ) {
-					UsedKeys.Up = true;
-				}
-				else if ( Event.key.keysym.sym == KeyRight ) {
-					UsedKeys.Right = true;
-				}
-				else if ( Event.key.keysym.sym == KeyDown ) {
-					UsedKeys.Down = true;
-				}
-				else if ( Event.key.keysym.sym == KeyLeft ) {
-					UsedKeys.Left = true;
-				}
-				else if ( Event.key.keysym.sym == KeyAbove ) {
-					UsedKeys.Above = true;
-				}
-				else if ( Event.key.keysym.sym == KeyBelow ) {
-					UsedKeys.Below = true;
-				}
-				else if ( Event.key.keysym.sym == KeyPlace ) {
-					UsedKeys.Place = true;
-				}
-				else if ( Event.key.keysym.sym == KeyBreak ) {
-					UsedKeys.Break = true;
-				}
-			}
-		}
-		EventHandle();
-		if ( Recalc ) {
-			FillSurfRGB ( 0xFF, 0xFF, 0xFF, Screen );
-			if ( InGame && !InInventory ) {
-				SetCamera();
-				DrawMap();
-				DrawCursor();
-				if ( DebugMode ) {
-					DrawDebug();
-				}
-			}
-			if ( InInventory ) {
-				DrawInventory();
-			}
-			if ( !FlipScreen( Window ) ) {
-				return 1;
-			}
-			Recalc = false;
-		}
-		SDL_Delay( CalcTimeLeft() );
-		NextTickTime += GameTick;
-	}
+	MultiSpacc_SetMainLoop( GameLoop, NULL, NULL );
 
 	printf("[I] Exiting!\n");
-	SDL_Quit();
+	//SDL_Quit();
 	return 0;
-}
+};

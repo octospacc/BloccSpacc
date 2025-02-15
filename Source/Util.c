@@ -1,11 +1,9 @@
 #include <stdbool.h>
 #include "LibMultiSpacc/MultiSpacc.h"
-//#include "SDL/SDL.h"
-//#include "SDL/SDL_image.h"
 
-SDL_Surface * LoadImage ( char *FilePath, MultiSpacc_Surface *Screen ) {
-	SDL_Surface *a = NULL;
-	SDL_Surface *b = NULL;
+MultiSpacc_Surface * LoadImage ( char *FilePath, MultiSpacc_Surface *Screen ) {
+	MultiSpacc_Surface *a = NULL;
+	MultiSpacc_Surface *b = NULL;
 	a = IMG_Load ( FilePath );///*
 	if ( a == NULL ) {
 		printf("[E] Error reading image %s.\n", FilePath);
@@ -22,18 +20,18 @@ SDL_Surface * LoadImage ( char *FilePath, MultiSpacc_Surface *Screen ) {
 	return b;//*/return a;
 }
 
-void DrawSurf ( int x, int y, SDL_Surface * Src, SDL_Rect * Clip, SDL_Surface * Dst ) {
+void DrawSurf ( int x, int y, MultiSpacc_Surface * Src, SDL_Rect * Clip, MultiSpacc_Surface * Dst ) {
 	SDL_Rect Offset;
 	Offset.x = x;
 	Offset.y = y;
 	SDL_BlitSurface( Src, Clip, Dst, &Offset );
 }
 
-void FillSurfRGB ( int R, int G, int B, SDL_Surface * Dst ) {
+void FillSurfRGB ( int R, int G, int B, MultiSpacc_Surface * Dst ) {
 	SDL_FillRect( Dst, &Dst->clip_rect, SDL_MapRGB( Dst->format, R, G, B ) );
 }
 
-void DrawOutlineRect ( int x, int y, int w, int h, int Size, int R, int G, int B, SDL_Surface * Dst ) {
+void DrawOutlineRect ( int x, int y, int w, int h, int Size, int R, int G, int B, MultiSpacc_Surface * Dst ) {
 	SDL_Rect Rect;
 	Rect.x = x;
 	Rect.y = y;
